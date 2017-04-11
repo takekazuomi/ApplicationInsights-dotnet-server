@@ -42,6 +42,9 @@ namespace Microsoft.ApplicationInsights.ServiceFabric
 
         public static void SetServiceCallContext(ServiceContext context)
         {
+            // The call initializes TelemetryConfiguration that will create and Intialize modules
+            TelemetryConfiguration configuration = TelemetryConfiguration.Active;
+
             CallContext.LogicalSetData(ServiceContextKeyName, context);
         }
 
