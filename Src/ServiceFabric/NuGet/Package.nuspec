@@ -18,7 +18,7 @@
     <tags>Analytics ApplicationInsights Telemetry AppInsights</tags>
     <dependencies>
       <group targetFramework="net45">
-        <dependency id="Microsoft.ApplicationInsights" version="[$coresdkversion$]" />
+        <dependency id="Microsoft.ApplicationInsights" version="[2.3,3)" />
         <dependency id="Microsoft.ServiceFabric" version="5.5.216" />
       </group>
     </dependencies>
