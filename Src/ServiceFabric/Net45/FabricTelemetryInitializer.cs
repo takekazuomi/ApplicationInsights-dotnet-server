@@ -99,6 +99,28 @@ namespace Microsoft.ApplicationInsights.ServiceFabric
                         }
                     }
                 }
+
+                // Fallback to environment variables for setting role / instance names. We will rely on these environment variables exclusively for container lift and shift scenarios for now.
+                // And for reliable services, when service context is neither provided directly nor through call context
+                if(string.IsNullOrEmpty(telemetry.Context.Cloud.RoleName))
+                {
+                    telemetry.Context.Cloud.RoleName = Environment.GetEnvironmentVariable(KnownEnvironmentVariableName.ServicePackageName);
+                }
+                
+                if (string.IsNullOrEmpty(telemetry.Context.Cloud.RoleInstance))
+                {
+                    telemetry.Context.Cloud.RoleInstance = Environment.GetEnvironmentVariable(KnownEnvironmentVariableName.ServicePackageActivatonId) ?? Environment.GetEnvironmentVariable(KnownEnvironmentVariableName.ServicePackageInstanceId);
+                }
+
+                if (!telemetry.Context.Properties.ContainsKey(KnownContextFieldNames.NodeName))
+                {
+                    string nodeName = Environment.GetEnvironmentVariable(KnownEnvironmentVariableName.NodeName);
+
+                    if (!string.IsNullOrEmpty(nodeName))
+                    {
+                        telemetry.Context.Properties.Add(KnownContextFieldNames.NodeName, nodeName);
+                    }
+                }
             }
             catch
             {
@@ -147,6 +169,14 @@ namespace Microsoft.ApplicationInsights.ServiceFabric
             public const string NodeName = "NodeName";
             public const string InstanceId = "InstanceId";
             public const string ReplicaId = "ReplicaId";
+        }
+
+        private class KnownEnvironmentVariableName
+        {
+            public const string ServicePackageName = "Fabric_ServicePackageName";
+            public const string ServicePackageInstanceId = "Fabric_ServicePackageInstanceId";
+            public const string ServicePackageActivatonId = "Fabric_ServicePackageActivationId";
+            public const string NodeName = "Fabric_NodeName";
         }
     }
 }
