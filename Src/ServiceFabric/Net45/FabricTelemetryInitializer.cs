@@ -161,14 +161,14 @@ namespace Microsoft.ApplicationInsights.ServiceFabric
 
         private class KnownContextFieldNames
         {
-            public const string ServiceName = "ServiceName";
-            public const string ServiceTypeName = "ServiceTypeName";
-            public const string PartitionId = "PartitionId";
-            public const string ApplicationName = "ApplicationName";
-            public const string ApplicationTypeName = "ApplicationTypeName";
-            public const string NodeName = "NodeName";
-            public const string InstanceId = "InstanceId";
-            public const string ReplicaId = "ReplicaId";
+            public const string ServiceName = "ServiceFabric.ServiceName";
+            public const string ServiceTypeName = "ServiceFabric.ServiceTypeName";
+            public const string PartitionId = "ServiceFabric.PartitionId";
+            public const string ApplicationName = "ServiceFabric.ApplicationName";
+            public const string ApplicationTypeName = "ServiceFabric.ApplicationTypeName";
+            public const string NodeName = "ServiceFabric.NodeName";
+            public const string InstanceId = "ServiceFabric.InstanceId";
+            public const string ReplicaId = "ServiceFabric.ReplicaId";
         }
 
         private class KnownEnvironmentVariableName
