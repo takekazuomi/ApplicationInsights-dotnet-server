@@ -10,12 +10,30 @@
     using System.Threading;
 
     using Microsoft.ApplicationInsights.Extensibility.Implementation.Tracing;
-    
+    using Microsoft.ApplicationInsights.Extensibility.Implementation;
+    using System.Collections.Generic;
+
     /// <summary>
     /// Diagnostics telemetry module for azure web sites.
     /// </summary>
     public class FileDiagnosticsTelemetryModule : IDisposable, ITelemetryModule
     {
+        private class StubHeartbeatPropertyManager : IHeartbeatPropertyManager
+        {
+            public bool IsHeartbeatEnabled { get => false; set { } }
+
+            public TimeSpan HeartbeatInterval { get => TimeSpan.MaxValue; set { } }
+
+            public IList<string> ExcludedHeartbeatProperties => null;
+
+            public bool AddHealthProperty(string propertyName, string propertyValue, bool isHealthy) { return false; }
+
+            public bool SetHealthProperty(string propertyName, string propertyValue = null, bool? isHealthy = null)
+            {
+                return propertyName.Equals("stubFileDiagModule", StringComparison.Ordinal);
+            }
+        }
+
         private string windowsIdentityName;
         
         private string logFileName;
@@ -23,6 +41,8 @@
 
         private TraceSourceForEventSource traceSource = new TraceSourceForEventSource(EventLevel.Error);
         private DefaultTraceListener listener = new DefaultTraceListener();
+
+        private IHeartbeatPropertyManager heartbeatManager = new StubHeartbeatPropertyManager();
 
         /// <summary>
         /// Initializes a new instance of the <see cref="FileDiagnosticsTelemetryModule" /> class.
@@ -58,6 +78,7 @@
                     {
                         parsedValue = (EventLevel)Enum.Parse(typeof(EventLevel), value, true);
                         this.traceSource.LogLevel = parsedValue;
+                        this.heartbeatManager.AddHealthProperty("fileDiagModLogLevel", parsedValue.ToString(), true);
                     }
                 }
             }
@@ -78,6 +99,7 @@
                 if (this.SetAndValidateLogsFolder(this.logFilePath, value))
                 {
                     this.logFileName = value;
+                    this.heartbeatManager.SetHealthProperty("fileDiagModLogPath", Path.Combine(this.LogFilePath, this.LogFileName), true);
                 }
             }
         }
@@ -98,6 +120,7 @@
                 if (this.SetAndValidateLogsFolder(expandedPath, this.logFileName))
                 {
                     this.logFilePath = expandedPath;
+                    this.heartbeatManager.SetHealthProperty("fileDiagModLogPath", Path.Combine(this.LogFilePath, this.LogFileName), true);
                 }
             }
         }
@@ -108,6 +131,23 @@
         /// <param name="configuration">Telemetry configuration object.</param>
         public void Initialize(TelemetryConfiguration configuration)
         {
+            var modules = TelemetryModules.Instance;
+            foreach (var iModule in modules.Modules)
+            {
+                if (iModule is IHeartbeatPropertyManager)
+                {
+                    this.heartbeatManager = iModule as IHeartbeatPropertyManager;
+                    
+                    this.heartbeatManager.AddHealthProperty("fileDiagModLogLevel", this.Severity, true);
+                    this.heartbeatManager.AddHealthProperty("fileDiagModLogPath", Path.Combine(this.LogFilePath, this.LogFileName), true);
+                    break;
+                }
+            }
+            if (this.heartbeatManager == null)
+            {
+                // we are being initialized prior to any heartbeat manager module, wait for a few minutes and try again
+
+            }
         }        
 
         /// <summary>
